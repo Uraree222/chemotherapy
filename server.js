@@ -26,10 +26,19 @@ app.use(express.static(__dirname));
 // Authentication middleware
 const requireAuth = (req, res, next) => {
     if (!req.session.userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res.redirect('/');
     }
     next();
 };
+
+// Check auth status
+app.get('/api/auth-status', (req, res) => {
+    if (req.session.userId) {
+        res.json({ isAuthenticated: true });
+    } else {
+        res.json({ isAuthenticated: false });
+    }
+});
 
 // Login endpoint
 app.post('/api/login', async (req, res) => {
