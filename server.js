@@ -67,11 +67,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/dashboard', (req, res) => {
-    if (!req.session.userId) {
-        res.redirect('/');
-    } else {
-        res.sendFile(path.join(__dirname, 'index.html'));
-    }
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Database connection configuration
