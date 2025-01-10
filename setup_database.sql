@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- เพิ่มผู้ใช้เริ่มต้น (รหัสผ่าน: admin123)
+INSERT INTO users (username, password) VALUES 
+('admin', '$2a$10$8K1p/a0dL1LXMIgoEDFrwOxgxhD66BEEPYXc1Z7GHX6qJGf9h9AFi');
+
 CREATE TABLE IF NOT EXISTS patients (
     id INT AUTO_INCREMENT PRIMARY KEY,
     patient_name VARCHAR(255) NOT NULL,
