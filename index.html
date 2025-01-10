@@ -1,26 +1,35 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ข้อมูลหน่วยเคมีบำบัดโรงพยาบาลสงฆ์</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="style.css" rel="stylesheet">
-    <link rel="icon" type="image/jpeg" href="pic/PRH.jpg">
+    <title>เข้าสู่ระบบ</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header flex items-center">
-            <img src="pic/PRH.jpg" alt="PRH Logo" class="h-16 mr-4">
-            <h1>ข้อมูลหน่วยเคมีบำบัดโรงพยาบาลสงฆ์</h1>
+    <div id="loginPage" class="container">
+        <div class="login-form">
+            <h1>เข้าสู่ระบบ</h1>
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="ชื่อผู้ใช้" required>
+                <input type="password" id="password" placeholder="รหัสผ่าน" required>
+                <button type="submit">เข้าสู่ระบบ</button>
+            </form>
         </div>
-        <div id="root"></div>
     </div>
+    <div id="app" style="display: none">
+        <div class="container">
+            <div class="header flex items-center">
+                <img src="pic/PRH.jpg" alt="PRH Logo" class="h-16 mr-4">
+                <h1>ข้อมูลหน่วยเคมีบำบัดโรงพยาบาลสงฆ์</h1>
+            </div>
+            <div id="root"></div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="index.js"></script>
     <script type="text/babel">
         function ChemotherapyDashboard() {
             const [patients, setPatients] = React.useState([]);
@@ -34,7 +43,6 @@
             });
             const [editingPatient, setEditingPatient] = React.useState(null);
 
-            // Previous useEffect hooks remain the same
             React.useEffect(() => {
                 const savedPatients = localStorage.getItem('patients');
                 if (savedPatients) {
@@ -93,7 +101,6 @@
             };
 
             const exportToCSV = () => {
-                // Create CSV content with Thai headers
                 const headers = ['ชื่อผู้ป่วย', 'HN', 'เบอร์โทรศัพท์', 'การวินิจฉัย', 'วันที่นัดหมาย', 'รอบการรักษา'];
                 const csvContent = [
                     headers.join(','),
@@ -107,17 +114,13 @@
                     ].join(','))
                 ].join('\n');
 
-                // Add BOM for UTF-8 encoding
                 const BOM = '\uFEFF';
                 const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                
-                // Get current date for filename
                 const today = new Date().toISOString().split('T')[0];
                 link.download = `การนัดหมายเคมีบำบัด_${today}.csv`;
-                
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -157,7 +160,6 @@
                         </div>
                     </div>
 
-                    {/* Appointments List */}
                     <div className="bg-white p-4 rounded shadow overflow-hidden mb-6">
                         <h2 className="text-lg font-semibold mb-4">การนัดหมาย</h2>
                         <div className="overflow-x-auto">
@@ -210,7 +212,6 @@
                         </div>
                     </div>
 
-                    {/* New Patient Form */}
                     <div className="bg-white p-4 rounded shadow">
                         <h2 className="text-lg font-semibold mb-4">เพิ่มผู้ป่วยใหม่</h2>
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -301,6 +302,31 @@
         }
 
         ReactDOM.render(<ChemotherapyDashboard />, document.getElementById('root'));
+    </script>
+    <script>
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('loginPage').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                } else {
+                    alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+            }
+        };
     </script>
 </body>
 </html>
