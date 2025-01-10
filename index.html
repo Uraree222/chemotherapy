@@ -318,10 +318,8 @@
                 const response = await fetch('http://0.0.0.0:3000/api/login', {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Content-Type': 'application/json'
                     },
-                    credentials: 'include',
                     body: JSON.stringify({ username, password })
                 });
 
@@ -330,6 +328,7 @@
                 if (data.success) {
                     document.getElementById('loginPage').style.display = 'none';
                     document.getElementById('app').style.display = 'block';
+                    window.location.href = '/dashboard';
                 } else {
                     alert(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
                 }
@@ -338,16 +337,6 @@
                 alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง');
             }
         };
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('loginPage').style.display = 'none';
-                    document.getElementById('app').style.display = 'block';
                 } else {
                     console.error('Login failed:', data.message);
                     alert(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
