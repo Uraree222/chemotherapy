@@ -328,7 +328,6 @@
                 if (data.success) {
                     document.getElementById('loginPage').style.display = 'none';
                     document.getElementById('app').style.display = 'block';
-                    window.location.href = '/dashboard';
                 } else {
                     alert(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
                 }

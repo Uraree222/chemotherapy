@@ -62,6 +62,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/dashboard', (req, res) => {
+    if (!req.session.userId) {
+        res.redirect('/');
+    } else {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    }
+});
+
 // Database connection configuration
 const dbConfig = {
     host: process.env.DB_HOST,
