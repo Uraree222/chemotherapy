@@ -17,11 +17,10 @@
         </div>
         <div id="root"></div>
     </div>
-    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-    <script type="text/babel">
+    <script type="text/babel" data-presets="es2015,react,stage-0">
         function ChemotherapyDashboard() {
             const [patients, setPatients] = React.useState([]);
             const [formData, setFormData] = React.useState({
@@ -302,5 +301,6 @@
 
         ReactDOM.render(<ChemotherapyDashboard />, document.getElementById('root'));
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </body>
 </html>
