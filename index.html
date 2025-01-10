@@ -310,9 +310,13 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('/api/login', {
+                const response = await fetch('http://0.0.0.0:3000/api/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include',
                     body: JSON.stringify({ username, password })
                 });
 
@@ -320,13 +324,13 @@
                 if (data.success) {
                     document.getElementById('loginPage').style.display = 'none';
                     document.getElementById('app').style.display = 'block';
-                    window.location.reload(); // รีเฟรชหน้าเว็บ
                 } else {
+                    console.error('Login failed:', data.message);
                     alert(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+                alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง');
             }
         };
     </script>
