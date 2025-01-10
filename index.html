@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อมูลหน่วยเคมีบำบัดโรงพยาบาลสงฆ์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <link rel="icon" type="image/jpeg" href="pic/PRH.jpg">
+</head>
+<body>
+    <div class="container">
+        <div class="header flex items-center">
+            <img src="pic/PRH.jpg" alt="PRH Logo" class="h-16 mr-4">
+            <h1>ข้อมูลหน่วยเคมีบำบัดโรงพยาบาลสงฆ์</h1>
+        </div>
+        <div id="root"></div>
+    </div>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script type="text/babel">
+        function ChemotherapyDashboard() {
+            const [patients, setPatients] = React.useState([]);
+            const [formData, setFormData] = React.useState({
+                patientName: '',
+                hn: '',
+                phoneNumber: '',
+                diagnosis: '',
+                appointmentDate: '',
+                nextCycle: ''
+            });
+            const [editingPatient, setEditingPatient] = React.useState(null);
+
+            // Previous useEffect hooks remain the same
+            React.useEffect(() => {
+                const savedPatients = localStorage.getItem('patients');
+                if (savedPatients) {
+                    setPatients(JSON.parse(savedPatients));
+                }
+            }, []);
+
+            React.useEffect(() => {
+                localStorage.setItem('patients', JSON.stringify(patients));
+            }, [patients]);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!formData.patientName || !formData.hn || !formData.phoneNumber || 
+                    !formData.diagnosis || !formData.appointmentDate || !formData.nextCycle) {
+                    alert('Please fill all fields');
+                    return;
+                }
+                if (editingPatient) {
+                    const newPatients = [...patients];
+                    const index = newPatients.findIndex(p => p.id === editingPatient.id);
+                    newPatients[index] = { ...formData, id: editingPatient.id };
+                    setPatients(newPatients);
+                    setEditingPatient(null);
+                } else {
+                    setPatients([...patients, { ...formData, id: Date.now() }]);
+                }
+                setFormData({
+                    patientName: '',
+                    hn: '',
+                    phoneNumber: '',
+                    diagnosis: '',
+                    appointmentDate: '',
+                    nextCycle: ''
+                });
+            };
+
+            const handleEdit = (patient) => {
+                setFormData({
+                    patientName: patient.patientName,
+                    hn: patient.hn,
+                    phoneNumber: patient.phoneNumber,
+                    diagnosis: patient.diagnosis,
+                    appointmentDate: patient.appointmentDate,
+                    nextCycle: patient.nextCycle
+                });
+                setEditingPatient(patient);
+            };
+
+            const handleDelete = (index) => {
+                if (window.confirm('Delete this appointment?')) {
+                    const newPatients = [...patients];
+                    newPatients.splice(index, 1);
+                    setPatients(newPatients);
+                }
+            };
+
+            const exportToCSV = () => {
+                // Create CSV content with Thai headers
+                const headers = ['ชื่อผู้ป่วย', 'HN', 'เบอร์โทรศัพท์', 'การวินิจฉัย', 'วันที่นัดหมาย', 'รอบการรักษา'];
+                const csvContent = [
+                    headers.join(','),
+                    ...patients.map(patient => [
+                        `"${patient.patientName}"`,
+                        `"${patient.hn}"`,
+                        `"${patient.phoneNumber}"`,
+                        `"${patient.diagnosis}"`,
+                        `"${patient.appointmentDate}"`,
+                        `"${patient.nextCycle}"`
+                    ].join(','))
+                ].join('\n');
+
+                // Add BOM for UTF-8 encoding
+                const BOM = '\uFEFF';
+                const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                
+                // Get current date for filename
+                const today = new Date().toISOString().split('T')[0];
+                link.download = `การนัดหมายเคมีบำบัด_${today}.csv`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            };
+
+            return (
+                <div className="p-4 max-w-6xl mx-auto fade-in">
+                    <div className="flex justify-between items-center mb-4">
+                        <h1 className="text-2xl font-bold">ระบบนัดหมายเคมีบำบัด</h1>
+                        <button 
+                            onClick={exportToCSV}
+                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                        >
+                            Export to CSV
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="bg-white p-4 rounded shadow">
+                            <h3 className="text-gray-500 text-sm">การนัดหมายวันนี้</h3>
+                            <p className="text-2xl font-bold text-blue-600">
+                                {patients.filter(p => p.appointmentDate === new Date().toISOString().split('T')[0]).length}
+                            </p>
+                        </div>
+                        <div className="bg-white p-4 rounded shadow">
+                            <h3 className="text-gray-500 text-sm">จำนวนผู้ป่วยทั้งหมด</h3>
+                            <p className="text-2xl font-bold text-green-600">
+                                {patients.length}
+                            </p>
+                        </div>
+                        <div className="bg-white p-4 rounded shadow">
+                            <h3 className="text-gray-500 text-sm">เดือนนี้</h3>
+                            <p className="text-2xl font-bold text-purple-600">
+                                {patients.filter(p => p.appointmentDate.startsWith(new Date().toISOString().slice(0, 7))).length}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Appointments List */}
+                    <div className="bg-white p-4 rounded shadow overflow-hidden mb-6">
+                        <h2 className="text-lg font-semibold mb-4">การนัดหมาย</h2>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th>ชื่อผู้ป่วย</th>
+                                        <th>HN</th>
+                                        <th>เบอร์โทรศัพท์</th>
+                                        <th>การวินิจฉัย</th>
+                                        <th>วันที่นัดหมาย</th>
+                                        <th>รอบการรักษา</th>
+                                        <th>การดำเนินการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {patients.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="7" className="text-center py-4">ไม่มีการนัดหมาย</td>
+                                        </tr>
+                                    ) : (
+                                        patients.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate))
+                                        .map((patient, index) => (
+                                            <tr key={index}>
+                                                <td>{patient.patientName}</td>
+                                                <td>{patient.hn}</td>
+                                                <td>{patient.phoneNumber}</td>
+                                                <td>{patient.diagnosis}</td>
+                                                <td>{patient.appointmentDate}</td>
+                                                <td>{patient.nextCycle}</td>
+                                                <td className="space-x-2">
+                                                    <button 
+                                                        onClick={() => handleEdit(patient)}
+                                                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-all"
+                                                    >
+                                                        แก้ไข
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDelete(index)}
+                                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-all"
+                                                    >
+                                                        ลบ
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* New Patient Form */}
+                    <div className="bg-white p-4 rounded shadow">
+                        <h2 className="text-lg font-semibold mb-4">เพิ่มผู้ป่วยใหม่</h2>
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    ชื่อผู้ป่วย
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.patientName}
+                                    onChange={(e) => setFormData({...formData, patientName: e.target.value})}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    HN
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.hn}
+                                    onChange={(e) => setFormData({...formData, hn: e.target.value})}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    เบอร์โทรศัพท์
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={formData.phoneNumber}
+                                    onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    การวินิจฉัย
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.diagnosis}
+                                    onChange={(e) => setFormData({...formData, diagnosis: e.target.value})}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    วันที่นัดหมาย
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formData.appointmentDate}
+                                    onChange={(e) => setFormData({...formData, appointmentDate: e.target.value})}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    รอบการรักษา
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.nextCycle}
+                                    onChange={(e) => setFormData({...formData, nextCycle: e.target.value})}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                    required
+                                />
+                            </div>
+                            <div className="md:col-span-3">
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                >
+                                    {editingPatient ? 'แก้ไข' : 'เพิ่มการนัดหมาย'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<ChemotherapyDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

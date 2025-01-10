@@ -1,0 +1,110 @@
+/* Custom styles that complement Tailwind */
+:root {
+    --primary: #3498db;
+    --primary-dark: #2980b9;
+    --secondary: #2ecc71;
+    --secondary-dark: #27ae60;
+    --accent: #a8e6cf;
+}
+
+/* Override Tailwind classes where needed */
+.container {
+    max-width: 1440px !important;
+    margin: 0 auto !important;
+    padding: 2rem !important;
+}
+
+/* Custom animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Enhanced card styles */
+.bg-white {
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+.bg-white:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Button enhancements */
+button {
+    transition: all 0.3s ease !important;
+}
+
+button:hover {
+    transform: translateY(-2px) !important;
+}
+
+/* Form input styles */
+input, select {
+    transition: all 0.3s ease !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 1rem !important;
+}
+
+input:focus, select:focus {
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Table styles */
+table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+tr {
+    transition: background-color 0.3s ease !important;
+}
+
+/* Header styles */
+h1 {
+    background: linear-gradient(120deg, var(--primary) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600 !important;
+}
+
+.header {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+}
+
+.header img {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Add Sarabun font */
+body {
+    font-family: 'Sarabun', sans-serif !important;
+}
+
+/* Add Sarabun font for Thai language */
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
