@@ -10,16 +10,32 @@
     <link rel="icon" type="image/jpeg" href="pic/PRH.jpg">
 </head>
 <body>
-    <div class="container">
-        <div class="header flex items-center">
-            <img src="pic/PRH.jpg" alt="PRH Logo" class="h-16 mr-4">
-            <h1>ข้อมูลหน่วยเคมีบำบัดโรงพยาบาลสงฆ์</h1>
+    <div id="loginPage" class="container">
+        <div class="login-form">
+            <h1>เข้าสู่ระบบ</h1>
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="ชื่อผู้ใช้" required>
+                <input type="password" id="password" placeholder="รหัสผ่าน" required>
+                <button type="submit">เข้าสู่ระบบ</button>
+            </form>
         </div>
-        <div id="root"></div>
     </div>
+    
+    <div id="app" style="display: none">
+        <div class="container">
+            <div class="header flex items-center">
+                <img src="pic/PRH.jpg" alt="PRH Logo" class="h-16 mr-4">
+                <h1>ข้อมูลหน่วยเคมีบำบัดโรงพยาบาลสงฆ์</h1>
+            </div>
+            <div id="root"></div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    
     <script type="text/babel" data-presets="es2015,react,stage-0">
         function ChemotherapyDashboard() {
             const [patients, setPatients] = React.useState([]);
@@ -33,7 +49,6 @@
             });
             const [editingPatient, setEditingPatient] = React.useState(null);
 
-            // Previous useEffect hooks remain the same
             React.useEffect(() => {
                 const savedPatients = localStorage.getItem('patients');
                 if (savedPatients) {
@@ -92,7 +107,6 @@
             };
 
             const exportToCSV = () => {
-                // Create CSV content with Thai headers
                 const headers = ['ชื่อผู้ป่วย', 'HN', 'เบอร์โทรศัพท์', 'การวินิจฉัย', 'วันที่นัดหมาย', 'รอบการรักษา'];
                 const csvContent = [
                     headers.join(','),
@@ -106,17 +120,13 @@
                     ].join(','))
                 ].join('\n');
 
-                // Add BOM for UTF-8 encoding
                 const BOM = '\uFEFF';
                 const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                
-                // Get current date for filename
                 const today = new Date().toISOString().split('T')[0];
                 link.download = `การนัดหมายเคมีบำบัด_${today}.csv`;
-                
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -156,7 +166,6 @@
                         </div>
                     </div>
 
-                    {/* Appointments List */}
                     <div className="bg-white p-4 rounded shadow overflow-hidden mb-6">
                         <h2 className="text-lg font-semibold mb-4">การนัดหมาย</h2>
                         <div className="overflow-x-auto">
@@ -209,7 +218,6 @@
                         </div>
                     </div>
 
-                    {/* New Patient Form */}
                     <div className="bg-white p-4 rounded shadow">
                         <h2 className="text-lg font-semibold mb-4">เพิ่มผู้ป่วยใหม่</h2>
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -301,6 +309,52 @@
 
         ReactDOM.render(<ChemotherapyDashboard />, document.getElementById('root'));
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+    <script>
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+            } else {
+                document.getElementById('loginPage').style.display = 'block';
+                document.getElementById('app').style.display = 'none';
+            }
+        }
+
+        // เรียกใช้ตอนโหลดหน้า
+        document.addEventListener('DOMContentLoaded', checkAuthStatus);
+
+        // จัดการการ submit form
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    checkAuthStatus();
+                } else {
+                    console.error('Login failed:', data.message);
+                    alert(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            }
+        });
+    </script>
 </body>
 </html>
