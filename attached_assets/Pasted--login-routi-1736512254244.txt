@@ -1,0 +1,119 @@
+การแก้ไขให้ระบบสามารถแสดงหน้าถัดไปหลังจากการเข้าสู่ระบบ (login) คุณสามารถเพิ่มการกำหนดเส้นทาง (routing) และตรวจสอบสถานะการเข้าสู่ระบบ (session authentication) ได้ดังนี้:
+
+การแก้ไขโค้ด:
+1. เพิ่ม Middleware สำหรับตรวจสอบการเข้าสู่ระบบ
+สร้าง middleware requireAuth เพื่อป้องกันการเข้าถึงหน้าที่ต้องล็อกอิน:
+
+javascript
+Copy code
+const requireAuth = (req, res, next) => {
+    if (!req.session.userId) {
+        return res.redirect('/'); // กลับไปหน้า login ถ้ายังไม่ได้เข้าสู่ระบบ
+    }
+    next();
+};
+2. เพิ่ม Endpoint สำหรับหน้า Dashboard
+ปรับ app.get('/dashboard') ให้รองรับการแสดงผลหน้าหลักหลังจากล็อกอิน:
+
+javascript
+Copy code
+app.get('/dashboard', requireAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html')); // ใช้ไฟล์ HTML สำหรับหน้าหลัก
+});
+3. ปรับ Endpoint /api/login
+เพิ่มการเปลี่ยนเส้นทางไปยัง /dashboard หลังจากการล็อกอินสำเร็จ:
+
+javascript
+Copy code
+app.post('/api/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        
+        if (!username || !password) {
+            return res.status(400).json({ success: false, message: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน' });
+        }
+
+        const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+        
+        if (users.length === 0 || !(await bcrypt.compare(password, users[0].password))) {
+            return res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+        }
+
+        req.session.userId = users[0].id;
+        req.session.username = users[0].username;
+
+        res.json({ success: true, redirectUrl: '/dashboard' }); // เพิ่ม redirectUrl
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ' });
+    }
+});
+4. เพิ่มการเปลี่ยนเส้นทางในฝั่ง Frontend
+ใน index.html ให้ปรับ JavaScript ที่เกี่ยวกับการล็อกอินเพื่อเปลี่ยนเส้นทางไปยัง /dashboard เมื่อเข้าสู่ระบบสำเร็จ:
+
+javascript
+Copy code
+document.getElementById('loginForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    if (!username || !password) {
+        alert('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.href = data.redirectUrl; // เปลี่ยนเส้นทาง
+        } else {
+            alert(data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง');
+    }
+};
+5. สร้างไฟล์ dashboard.html
+สร้างไฟล์ dashboard.html สำหรับหน้าหลัก:
+
+html
+Copy code
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ยินดีต้อนรับสู่หน้าหลัก</h1>
+        <a href="/api/logout">ออกจากระบบ</a>
+    </div>
+</body>
+</html>
+6. เพิ่ม Endpoint สำหรับ Logout
+ให้ผู้ใช้สามารถออกจากระบบได้:
+
+javascript
+Copy code
+app.post('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ success: false, message: 'ไม่สามารถออกจากระบบได้' });
+        }
+        res.json({ success: true, message: 'ออกจากระบบสำเร็จ' });
+    });
+});
+ผลลัพธ์ที่ได้:
+หลังจากเข้าสู่ระบบสำเร็จ ระบบจะเปลี่ยนเส้นทางไปยัง /dashboard.
+หากผู้ใช้ไม่ได้เข้าสู่ระบบและพยายามเข้าถึง /dashboard จะถูกเปลี่ยนเส้นทางไปยังหน้าล็อกอิน.
+ผู้ใช้สามารถออกจากระบบได้ผ่านปุ่ม "ออกจากระบบ".
