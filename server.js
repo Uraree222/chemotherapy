@@ -34,9 +34,9 @@ const requireAuth = (req, res, next) => {
 // Check auth status
 app.get('/api/auth-status', (req, res) => {
     if (req.session.userId) {
-        res.json({ isAuthenticated: true });
+        res.json({ loggedIn: true, username: req.session.username });
     } else {
-        res.json({ isAuthenticated: false });
+        res.json({ loggedIn: false });
     }
 });
 
