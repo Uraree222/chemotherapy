@@ -31,23 +31,23 @@ const requireAuth = (req, res, next) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+        
+        if (!username || !password) {
+            return res.status(400).json({ success: false, message: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน' });
+        }
+
         const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
         
-        if (users.length === 0) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+        if (users.length === 0 || !(await bcrypt.compare(password, users[0].password))) {
+            return res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
         }
 
-        const user = users[0];
-        const validPassword = await bcrypt.compare(password, user.password);
-        
-        if (!validPassword) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        req.session.userId = user.id;
-        res.json({ success: true });
+        req.session.userId = users[0].id;
+        req.session.username = users[0].username;
+        res.json({ success: true, message: 'เข้าสู่ระบบสำเร็จ' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Login error:', error);
+        res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ' });
     }
 });
 
