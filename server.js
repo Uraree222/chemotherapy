@@ -26,7 +26,7 @@ app.use(express.static(__dirname));
 // Authentication middleware
 const requireAuth = (req, res, next) => {
     if (!req.session.userId) {
-        return res.redirect('/');
+        return res.status(401).json({ success: false, message: 'กรุณาเข้าสู่ระบบ' });
     }
     next();
 };
